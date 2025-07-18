@@ -32,7 +32,7 @@ const SubscriptionPage: React.FC = () => {
     },
     {
       name: 'Pro',
-      price: '₹699',
+      price: '₹999',
       period: 'month',
       description: 'For professionals and frequent users',
       icon: Zap,
