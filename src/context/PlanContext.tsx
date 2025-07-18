@@ -10,6 +10,26 @@ export interface Room {
   size: string;
 }
 
+export interface MaterialEstimate {
+  bricks: number;
+  cement_bags: number;
+  steel_kg: number;
+  sand_cubic_meters: number;
+  aggregate_cubic_meters: number;
+  excavation_cubic_meters: number;
+  foundation_concrete: number;
+}
+
+export interface ISCodeCompliance {
+  overall_score: number;
+  room_size_compliance: boolean;
+  ventilation_compliance: boolean;
+  structural_compliance: boolean;
+  fire_safety_compliance: boolean;
+  accessibility_compliance: boolean;
+  violations: string[];
+}
+
 export interface FloorPlan {
   id: string;
   name: string;
@@ -18,6 +38,11 @@ export interface FloorPlan {
   totalArea: string;
   createdAt: Date;
   exportFormats: string[];
+  materialEstimate?: MaterialEstimate;
+  isCompliance?: ISCodeCompliance;
+  plotSize?: string;
+  floors?: number;
+  buildingType?: 'residential' | 'commercial' | 'industrial';
 }
 
 interface PlanContextType {
