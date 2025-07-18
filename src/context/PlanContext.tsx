@@ -55,8 +55,21 @@ interface PlanContextType {
     plan: 'free' | 'pro' | 'enterprise';
     plansRemaining: number;
     exportsRemaining: number;
+    referralCredits: number;
+    referralCode: string;
+    isActive: boolean;
+    nextBillingDate?: Date;
   };
   updateSubscription: (subscription: any) => void;
+  addReferralCredits: (credits: number) => void;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    referredBy?: string;
+    totalReferrals: number;
+  } | null;
+  setUser: (user: any) => void;
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
