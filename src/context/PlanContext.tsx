@@ -85,10 +85,15 @@ export const usePlan = () => {
 export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [plans, setPlans] = useState<FloorPlan[]>([]);
   const [currentPlan, setCurrentPlan] = useState<FloorPlan | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [subscription, setSubscription] = useState({
     plan: 'free' as 'free' | 'pro' | 'enterprise',
     plansRemaining: 3,
     exportsRemaining: 5,
+    referralCredits: 0,
+    referralCode: 'PLANIX' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+    isActive: true,
+    nextBillingDate: undefined,
   });
 
   const addPlan = (plan: FloorPlan) => {
@@ -107,6 +112,14 @@ export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setSubscription(newSubscription);
   };
 
+  const addReferralCredits = (credits: number) => {
+    setSubscription(prev => ({
+      ...prev,
+      referralCredits: prev.referralCredits + credits,
+      plansRemaining: prev.plansRemaining + credits
+    }));
+  };
+
   return (
     <PlanContext.Provider value={{
       plans,
@@ -116,6 +129,9 @@ export const PlanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       deletePlan,
       subscription,
       updateSubscription,
+      addReferralCredits,
+      user,
+      setUser,
     }}>
       {children}
     </PlanContext.Provider>
