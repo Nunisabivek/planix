@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Star, Zap, Crown, ArrowRight } from 'lucide-react';
+import { Check, Star, Zap, Crown, ArrowRight, Gift, Copy, Users, Shield, Ruler, Calculator } from 'lucide-react';
 import { usePlan } from '../context/PlanContext';
 
 const SubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
   const { subscription, updateSubscription } = usePlan();
+  const [copiedReferral, setCopiedReferral] = useState(false);
 
   const plans = [
     {
       name: 'Free',
-      price: '$0',
+      price: '₹0',
       period: 'forever',
       description: 'Perfect for trying out Planix',
       icon: Star,
@@ -20,48 +21,52 @@ const SubscriptionPage: React.FC = () => {
         '5 exports per month',
         'Basic room types',
         'DXF & SVG export',
-        'Community support'
+        'Community support',
+        'Basic IS code validation'
       ],
       limitations: [
         'Limited customization',
-        'Watermarked exports'
+        'Watermarked exports',
+        'No material estimates'
       ]
     },
     {
       name: 'Pro',
-      price: '$19',
+      price: '₹699',
       period: 'month',
       description: 'For professionals and frequent users',
       icon: Zap,
       color: 'teal',
       popular: true,
       features: [
-        'Unlimited floor plans',
+        '50 floor plans per month',
         'Unlimited exports',
         'Advanced room types',
         'All export formats (DXF, SVG, PDF, PNG)',
-        'Custom dimensions',
+        'Material estimates (bricks, cement, steel)',
+        'IS code compliance reports',
         'Priority support',
         'No watermarks',
-        'Collaboration tools'
+        'Excavation calculations'
       ]
     },
     {
       name: 'Enterprise',
-      price: '$99',
+      price: '₹2,999',
       period: 'month',
       description: 'For teams and organizations',
       icon: Crown,
       color: 'purple',
       features: [
         'Everything in Pro',
+        'Unlimited floor plans',
         'Team collaboration',
         'API access',
         'Custom branding',
         'Advanced analytics',
         'Dedicated support',
-        'SSO integration',
-        'Custom integrations'
+        'White-label licensing',
+        'Custom IS code rules'
       ]
     }
   ];
@@ -71,12 +76,21 @@ const SubscriptionPage: React.FC = () => {
       updateSubscription({
         plan: 'free',
         plansRemaining: 3,
-        exportsRemaining: 5
+        exportsRemaining: 5,
+        referralCredits: subscription.referralCredits,
+        referralCode: subscription.referralCode,
+        isActive: true
       });
       navigate('/');
     } else {
       navigate('/payment', { state: { selectedPlan: planName } });
     }
+  };
+
+  const copyReferralCode = () => {
+    navigator.clipboard.writeText(`https://planix.com/signup?ref=${subscription.referralCode}`);
+    setCopiedReferral(true);
+    setTimeout(() => setCopiedReferral(false), 2000);
   };
 
   return (
@@ -88,16 +102,16 @@ const SubscriptionPage: React.FC = () => {
             Choose Your Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Select the perfect plan for your floor planning needs. 
-            Upgrade or downgrade anytime.
+            Select the perfect plan for your floor planning needs with IS code compliance 
+            and material estimates. Upgrade or downgrade anytime.
           </p>
         </div>
 
         {/* Current Plan Status */}
-        <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl p-6 mb-12 max-w-2xl mx-auto">
+        <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl p-6 mb-8 max-w-2xl mx-auto">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Current Plan</h3>
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center justify-center space-x-4 mb-4">
               <span className="text-2xl font-bold text-teal-600 capitalize">
                 {subscription.plan}
               </span>
@@ -106,6 +120,70 @@ const SubscriptionPage: React.FC = () => {
                 <div>Exports: {subscription.exportsRemaining} remaining</div>
               </div>
             </div>
+            {subscription.referralCredits > 0 && (
+              <div className="text-sm text-purple-600 font-medium">
+                🎁 Referral Credits: {subscription.referralCredits}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Referral Program */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 mb-12 max-w-4xl mx-auto">
+          <div className="text-center mb-4">
+            <Gift className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Referral Program</h3>
+            <p className="text-gray-600">
+              Invite friends and get 1 month free when they upgrade to Pro. 
+              They get 50% off their first month!
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="bg-white rounded-lg px-4 py-2 border border-purple-200">
+              <span className="text-sm text-gray-600">Your referral code:</span>
+              <span className="font-mono font-bold text-purple-600 ml-2">{subscription.referralCode}</span>
+            </div>
+            <button
+              onClick={copyReferralCode}
+              className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200"
+            >
+              <Copy className="h-4 w-4" />
+              <span>{copiedReferral ? 'Copied!' : 'Copy Link'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* New Features Highlight */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-green-100">
+            <div className="flex items-center space-x-3 mb-3">
+              <Shield className="h-6 w-6 text-green-600" />
+              <h3 className="font-semibold text-gray-900">IS Code Compliance</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Automatic validation against Indian Standard building codes (IS 962, IS 800, etc.)
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-blue-100">
+            <div className="flex items-center space-x-3 mb-3">
+              <Ruler className="h-6 w-6 text-blue-600" />
+              <h3 className="font-semibold text-gray-900">Material Estimates</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Accurate quantity estimates for bricks, cement, steel, sand, and aggregates
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-orange-100">
+            <div className="flex items-center space-x-3 mb-3">
+              <Calculator className="h-6 w-6 text-orange-600" />
+              <h3 className="font-semibold text-gray-900">Excavation Calculations</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Foundation and earthwork volume calculations for construction planning
+            </p>
           </div>
         </div>
 
@@ -144,6 +222,12 @@ const SubscriptionPage: React.FC = () => {
                     <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
                     <span className="text-gray-600 ml-1">/{plan.period}</span>
                   </div>
+                  
+                  {plan.name === 'Pro' && (
+                    <div className="mt-2 text-sm text-green-600 font-medium">
+                      Save 20% with annual billing
+                    </div>
+                  )}
                 </div>
 
                 {/* Features */}
@@ -199,31 +283,41 @@ const SubscriptionPage: React.FC = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-2">
-                Can I change my plan anytime?
+                What makes Planix different from other floor plan tools?
               </h3>
               <p className="text-gray-600">
-                Yes, you can upgrade or downgrade your plan at any time. 
-                Changes take effect immediately and you'll be charged prorated amounts.
+                Planix is the only tool that combines AI-powered floor plan generation with 
+                IS code compliance checking and accurate material estimates for Indian construction.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-2">
-                What export formats are supported?
+                How accurate are the material estimates?
               </h3>
               <p className="text-gray-600">
-                Free plan includes DXF and SVG formats. Pro and Enterprise plans 
-                include all formats: DXF, SVG, PDF, and high-resolution PNG.
+                Our material estimates are based on IS 1904:2021 standards and include 
+                calculations for bricks, cement, steel, sand, and aggregates with 90%+ accuracy.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-2">
-                Is there a free trial for paid plans?
+                Which IS codes does Planix validate against?
               </h3>
               <p className="text-gray-600">
-                We offer a generous free plan to try Planix. You can upgrade to 
-                Pro or Enterprise anytime with a 30-day money-back guarantee.
+                We validate against IS 962 (residential buildings), IS 800 (steel structures), 
+                IS 3362 (ventilation), and other relevant Indian Standard codes.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-2">
+                How does the referral program work?
+              </h3>
+              <p className="text-gray-600">
+                Share your referral code with friends. When they upgrade to Pro, you both get 
+                benefits - you get 1 month free and they get 50% off their first month.
               </p>
             </div>
           </div>
