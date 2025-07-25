@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Star, Zap, Crown, ArrowRight, Gift, Copy, Users, Shield, Ruler, Calculator } from 'lucide-react';
-import { usePlan } from '../context/PlanContext';
+import { usePlans } from '../context/PlanContext';
 
 const SubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
