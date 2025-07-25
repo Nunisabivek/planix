@@ -4,7 +4,7 @@ import {
   Download, FileText, Image, Printer, ArrowLeft, Share2, Edit3, 
   CheckCircle, AlertCircle, Calculator, Hammer, Shield, Award
 } from 'lucide-react';
-import { usePlan } from '../context/PlanContext';
+import { usePlans } from '../context/PlanContext';
 
 const ExportPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
