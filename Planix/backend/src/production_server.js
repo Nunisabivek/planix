@@ -403,7 +403,20 @@ const PLAN_LIMITS = {
   }
 };
 
-// Routes
+// Root endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Welcome to Planix API - AI-powered floor plan generator',
+    version: '2.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      floorPlans: '/api/floor-plans',
+      subscriptions: '/api/subscriptions',
+      referrals: '/api/referrals'
+    }
+  });
+});
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
