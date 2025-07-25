@@ -188,9 +188,9 @@ def check_is_code_compliance(plan_details: dict) -> dict:
 # API Endpoints
 @app.post("/api/generate-floor-plan", response_model=FloorPlanResponse)
 async def generate_floor_plan(request: FloorPlanRequest):
-    """
-    Generate floor plan based on user requirements
-    """
+    """Generate floor plan based on user requirements"""
+    db = get_database()
+    
     try:
         # Generate unique plan ID
         plan_id = str(uuid.uuid4())
@@ -204,7 +204,7 @@ async def generate_floor_plan(request: FloorPlanRequest):
         - Bathrooms: {request.bathrooms}
         - Location: {request.location}
         - Budget: {request.budget}
-        - Special features: {', '.join(request.features)}
+        - Special features: {', '.join(request.features) if request.features else 'None'}
         
         Please provide a detailed architectural plan with room layouts, dimensions, and IS code compliance.
         """
@@ -219,12 +219,42 @@ async def generate_floor_plan(request: FloorPlanRequest):
             request.bathrooms or 1
         )
         
-        # Check IS code compliance
-        is_code_compliance = check_is_code_compliance({
-            "area": request.area,
-            "rooms": request.rooms,
-            "bathrooms": request.bathrooms
-        })
+        # Check IS code compliance using DeepSeek
+        is_code_compliance = await deepseek_service.check_is_code_compliance(
+            generated_plan, 
+            {
+                "area": request.area,
+                "rooms": request.rooms,
+                "bathrooms": request.bathrooms,
+                "location": request.location
+            }
+        )
+        
+        # Create floor plan document
+        floor_plan = FloorPlan(
+            id=plan_id,
+            user_id=request.user_id,
+            title=f"Floor Plan - {request.description[:50]}...",
+            description=request.description,
+            area=request.area,
+            rooms=request.rooms,
+            bathrooms=request.bathrooms,
+            location=request.location,
+            budget=request.budget,
+            features=request.features or [],
+            generated_plan=generated_plan,
+            material_estimate=material_estimate,
+            is_code_compliance=is_code_compliance
+        )
+        
+        # Save to database
+        await db[FLOOR_PLANS_COLLECTION].insert_one(floor_plan.dict())
+        
+        # Update user's plan usage
+        await db[USERS_COLLECTION].update_one(
+            {"id": request.user_id},
+            {"$inc": {"plans_used": 1}}
+        )
         
         # Create response
         response = FloorPlanResponse(
@@ -233,11 +263,9 @@ async def generate_floor_plan(request: FloorPlanRequest):
             generated_plan=generated_plan,
             material_estimate=material_estimate,
             is_code_compliance=is_code_compliance,
-            created_at=datetime.now(),
+            created_at=floor_plan.created_at,
             user_id=request.user_id
         )
-        
-        # TODO: Save to database
         
         return response
         
