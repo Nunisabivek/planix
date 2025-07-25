@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Testing for Planix
-Tests all API endpoints with realistic data
+Comprehensive Backend API Testing for Planix Node.js/Express API
+Tests all API endpoints with realistic data and JWT authentication
 """
 
 import requests
@@ -20,6 +20,7 @@ class PlanixAPITester:
         self.session = requests.Session()
         self.test_user_id = None
         self.test_plan_id = None
+        self.auth_token = None
         self.test_results = []
         
     def log_test(self, test_name: str, success: bool, details: str = ""):
