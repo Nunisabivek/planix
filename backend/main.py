@@ -171,7 +171,7 @@ async def generate_floor_plan(request: FloorPlanRequest):
         """
         
         # Generate floor plan using DeepSeek API
-        generated_plan = await generate_floor_plan_with_deepseek(prompt)
+        generated_plan = await deepseek_service.generate_floor_plan(prompt)
         
         # Calculate material estimates
         material_estimate = calculate_material_estimate(
