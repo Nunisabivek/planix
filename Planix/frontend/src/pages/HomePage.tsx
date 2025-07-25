@@ -6,6 +6,52 @@ import {
 } from 'lucide-react';
 import { usePlans } from '../context/PlanContext';
 
+// Local interfaces for compatibility
+interface Room {
+  name: string;
+  type: string;
+  dimensions: string;
+  area: string;
+  icon: any;
+  color: string;
+  size: string;
+}
+
+interface MaterialEstimate {
+  bricks: number;
+  cement_bags: number;
+  steel_kg: number;
+  sand_cubic_meters: number;
+  aggregate_cubic_meters: number;
+  excavation_cubic_meters: number;
+  foundation_concrete: number;
+}
+
+interface ISCodeCompliance {
+  overall_score: number;
+  room_size_compliance: boolean;
+  ventilation_compliance: boolean;
+  structural_compliance: boolean;
+  fire_safety_compliance: boolean;
+  accessibility_compliance: boolean;
+  violations: string[];
+}
+
+interface FloorPlan {
+  id: string;
+  name: string;
+  description: string;
+  rooms: Room[];
+  totalArea: string;
+  createdAt: Date;
+  exportFormats: string[];
+  materialEstimate?: MaterialEstimate;
+  isCompliance?: ISCodeCompliance;
+  plotSize?: string;
+  floors?: number;
+  buildingType?: 'residential' | 'commercial' | 'industrial';
+}
+
 const HomePage: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
