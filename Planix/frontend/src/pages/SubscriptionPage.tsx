@@ -6,6 +6,21 @@ import { usePlans } from '../context/PlanContext';
 const SubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = usePlans();
+  
+  // Mock subscription data for compatibility
+  const subscription = {
+    plan: 'free' as 'free' | 'pro' | 'enterprise',
+    plansRemaining: 3,
+    exportsRemaining: 5,
+    referralCredits: 0,
+    referralCode: 'PLANIX2024ABC',
+    isActive: true
+  };
+  
+  const updateSubscription = (newSubscription: any) => {
+    // This would be handled by the backend in the new system
+    console.log('Update subscription:', newSubscription);
+  };
   const [copiedReferral, setCopiedReferral] = useState(false);
 
   const plans = [
