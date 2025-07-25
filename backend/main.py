@@ -439,25 +439,69 @@ async def apply_referral_code(request: ReferralRequest):
 
 @app.get("/api/plans/{user_id}")
 async def get_user_plans(user_id: str):
-    """
-    Get all floor plans for a user
-    """
-    # TODO: Implement database lookup
-    mock_plans = [
-        {
-            "id": str(uuid.uuid4()),
-            "description": "3 bedroom house with modern kitchen",
-            "created_at": datetime.now().isoformat(),
-            "status": "completed"
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "description": "2 bedroom apartment with balcony",
-            "created_at": (datetime.now() - timedelta(days=1)).isoformat(),
-            "status": "completed"
-        }
-    ]
-    return {"plans": mock_plans}
+    """Get all floor plans for a user"""
+    db = get_database()
+    
+    # Get user's floor plans
+    cursor = db[FLOOR_PLANS_COLLECTION].find({"user_id": user_id}).sort("created_at", -1)
+    plans = await cursor.to_list(length=None)
+    
+    # Convert datetime objects to strings for JSON serialization
+    for plan in plans:
+        plan["created_at"] = plan["created_at"].isoformat()
+        plan["updated_at"] = plan["updated_at"].isoformat()
+    
+    return {"plans": plans}
+
+@app.get("/api/plans/detail/{plan_id}")
+async def get_plan_detail(plan_id: str):
+    """Get detailed information about a specific floor plan"""
+    db = get_database()
+    
+    # Get plan details
+    plan = await db[FLOOR_PLANS_COLLECTION].find_one({"id": plan_id})
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Floor plan not found"
+        )
+    
+    # Convert datetime objects to strings
+    plan["created_at"] = plan["created_at"].isoformat()
+    plan["updated_at"] = plan["updated_at"].isoformat()
+    
+    return plan
+
+@app.post("/api/plans/{plan_id}/export")
+async def export_plan(plan_id: str):
+    """Export a floor plan (increment export count)"""
+    db = get_database()
+    
+    # Get plan details
+    plan = await db[FLOOR_PLANS_COLLECTION].find_one({"id": plan_id})
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Floor plan not found"
+        )
+    
+    # Update export count
+    await db[FLOOR_PLANS_COLLECTION].update_one(
+        {"id": plan_id},
+        {"$inc": {"export_count": 1}}
+    )
+    
+    # Update user's export usage
+    await db[USERS_COLLECTION].update_one(
+        {"id": plan["user_id"]},
+        {"$inc": {"exports_used": 1}}
+    )
+    
+    return {
+        "message": "Plan exported successfully",
+        "plan_id": plan_id,
+        "export_count": plan["export_count"] + 1
+    }
 
 # Root endpoint
 @app.get("/api/")
