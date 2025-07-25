@@ -5,7 +5,7 @@ import { usePlans } from '../context/PlanContext';
 
 const SubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
-  const { subscription, updateSubscription } = usePlan();
+  const { currentUser } = usePlans();
   const [copiedReferral, setCopiedReferral] = useState(false);
 
   const plans = [
