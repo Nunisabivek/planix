@@ -37,6 +37,13 @@ class PlanixAPITester:
             "timestamp": datetime.now().isoformat()
         })
     
+    def set_auth_header(self, token):
+        """Set authorization header for authenticated requests"""
+        if token:
+            self.session.headers.update({'Authorization': f'Bearer {token}'})
+        else:
+            self.session.headers.pop('Authorization', None)
+    
     def test_health_check(self):
         """Test health check endpoint"""
         try:
@@ -44,8 +51,8 @@ class PlanixAPITester:
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get("status") == "healthy":
-                    self.log_test("Health Check", True, "API is healthy")
+                if data.get("status") == "healthy" and "Planix" in data.get("message", ""):
+                    self.log_test("Health Check", True, f"API is healthy - Version: {data.get('version')}")
                     return True
                 else:
                     self.log_test("Health Check", False, f"Unexpected response: {data}")
@@ -58,90 +65,104 @@ class PlanixAPITester:
             self.log_test("Health Check", False, f"Exception: {str(e)}")
             return False
     
-    def test_create_user(self):
-        """Test user creation endpoint"""
+    def test_register_user(self):
+        """Test user registration endpoint"""
         try:
             user_data = {
                 "email": "architect.sharma@planix.com",
                 "name": "Rajesh Sharma",
-                "phone": "+91-9876543210"
+                "phone": "+91-9876543210",
+                "password": "SecurePass123!"
             }
             
             response = self.session.post(
-                f"{BASE_URL}/users/",
+                f"{BASE_URL}/auth/register",
                 json=user_data,
+                timeout=TIMEOUT
+            )
+            
+            if response.status_code == 201:
+                data = response.json()
+                if data.get("success") and "user" in data and "token" in data:
+                    self.test_user_id = data["user"]["id"]
+                    self.auth_token = data["token"]
+                    self.set_auth_header(self.auth_token)
+                    self.log_test("Register User", True, f"User registered with ID: {self.test_user_id}")
+                    return True
+                else:
+                    self.log_test("Register User", False, f"Missing fields in response: {data}")
+                    return False
+            else:
+                self.log_test("Register User", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Register User", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_login_user(self):
+        """Test user login endpoint"""
+        try:
+            login_data = {
+                "email": "architect.sharma@planix.com",
+                "password": "SecurePass123!"
+            }
+            
+            response = self.session.post(
+                f"{BASE_URL}/auth/login",
+                json=login_data,
                 timeout=TIMEOUT
             )
             
             if response.status_code == 200:
                 data = response.json()
-                if "user_id" in data and "message" in data:
-                    self.test_user_id = data["user_id"]
-                    self.log_test("Create User", True, f"User created with ID: {self.test_user_id}")
+                if data.get("success") and "user" in data and "token" in data:
+                    self.auth_token = data["token"]
+                    self.set_auth_header(self.auth_token)
+                    self.log_test("Login User", True, f"Login successful for user: {data['user']['name']}")
                     return True
                 else:
-                    self.log_test("Create User", False, f"Missing fields in response: {data}")
+                    self.log_test("Login User", False, f"Missing fields in response: {data}")
                     return False
             else:
-                self.log_test("Create User", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Login User", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Create User", False, f"Exception: {str(e)}")
+            self.log_test("Login User", False, f"Exception: {str(e)}")
             return False
     
-    def test_get_user(self):
-        """Test get user endpoint"""
-        if not self.test_user_id:
-            self.log_test("Get User", False, "No test user ID available")
+    def test_get_user_profile(self):
+        """Test protected user profile endpoint"""
+        if not self.auth_token:
+            self.log_test("Get User Profile", False, "No auth token available")
             return False
             
         try:
             response = self.session.get(
-                f"{BASE_URL}/users/{self.test_user_id}",
+                f"{BASE_URL}/user/profile",
                 timeout=TIMEOUT
             )
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get("email") == "architect.sharma@planix.com":
-                    self.log_test("Get User", True, f"User retrieved successfully")
-                    return True
+                if data.get("success") and "user" in data:
+                    user = data["user"]
+                    if user.get("email") == "architect.sharma@planix.com":
+                        self.log_test("Get User Profile", True, f"Profile retrieved for: {user['name']}")
+                        return True
+                    else:
+                        self.log_test("Get User Profile", False, f"User data mismatch: {user}")
+                        return False
                 else:
-                    self.log_test("Get User", False, f"User data mismatch: {data}")
+                    self.log_test("Get User Profile", False, f"Invalid response structure: {data}")
                     return False
             else:
-                self.log_test("Get User", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Get User Profile", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Get User", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_duplicate_user_creation(self):
-        """Test duplicate user creation (should fail)"""
-        try:
-            user_data = {
-                "email": "architect.sharma@planix.com",  # Same email as before
-                "name": "Another User",
-                "phone": "+91-1234567890"
-            }
-            
-            response = self.session.post(
-                f"{BASE_URL}/users/",
-                json=user_data,
-                timeout=TIMEOUT
-            )
-            
-            if response.status_code == 400:
-                self.log_test("Duplicate User Prevention", True, "Correctly rejected duplicate email")
-                return True
-            else:
-                self.log_test("Duplicate User Prevention", False, f"Should have returned 400, got {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Duplicate User Prevention", False, f"Exception: {str(e)}")
+            self.log_test("Get User Profile", False, f"Exception: {str(e)}")
             return False
     
     def test_generate_floor_plan(self):
