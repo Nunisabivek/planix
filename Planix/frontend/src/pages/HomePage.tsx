@@ -1,686 +1,472 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Download, Bed, Bath, Car, Utensils, ChefHat, Sofa, Sparkles, ArrowRight,
-  Home, Users, MapPin, Ruler, AlertCircle, Award, Gift, Shield
-} from 'lucide-react';
-import { usePlans } from '../context/PlanContext';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-// Local interfaces for compatibility
-interface Room {
-  name: string;
-  type: string;
-  dimensions: string;
-  area: string;
-  icon: any;
-  color: string;
-  size: string;
-}
-
-interface MaterialEstimate {
-  bricks: number;
-  cement_bags: number;
-  steel_kg: number;
-  sand_cubic_meters: number;
-  aggregate_cubic_meters: number;
-  excavation_cubic_meters: number;
-  foundation_concrete: number;
-}
-
-interface ISCodeCompliance {
-  overall_score: number;
-  room_size_compliance: boolean;
-  ventilation_compliance: boolean;
-  structural_compliance: boolean;
-  fire_safety_compliance: boolean;
-  accessibility_compliance: boolean;
-  violations: string[];
-}
-
-interface FloorPlan {
-  id: string;
-  name: string;
-  description: string;
-  rooms: Room[];
-  totalArea: string;
-  createdAt: Date;
-  exportFormats: string[];
-  materialEstimate?: MaterialEstimate;
-  isCompliance?: ISCodeCompliance;
-  plotSize?: string;
-  floors?: number;
-  buildingType?: 'residential' | 'commercial' | 'industrial';
-}
-
-const HomePage: React.FC = () => {
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showAdvancedForm, setShowAdvancedForm] = useState(false);
-  const { generateFloorPlan, currentUser } = usePlans();
-  
-  // Mock subscription data for compatibility
-  const subscription = {
-    plan: 'free' as 'free' | 'pro' | 'enterprise',
-    plansRemaining: 3,
-    exportsRemaining: 5,
-    referralCredits: 0,
-    referralCode: 'PLANIX2024ABC',
-    isActive: true
-  };
-  
-  const addPlan = (plan: FloorPlan) => {
-    // This is now handled by generateFloorPlan
-    console.log('Plan added:', plan);
-  };
-  const navigate = useNavigate();
-
-  // Advanced form state
-  const [formData, setFormData] = useState({
-    plotSize: '',
-    buildingType: 'residential' as 'residential' | 'commercial' | 'industrial',
-    floors: 1,
-    bedrooms: 2,
-    bathrooms: 2,
-    kitchen: true,
-    livingRoom: true,
-    diningRoom: false,
-    studyRoom: false,
-    garage: false,
-    balcony: false,
-    location: '',
-    budget: '',
-    specialRequirements: ''
-  });
-
-  const generateMockMaterialEstimate = (totalArea: number): MaterialEstimate => {
-    const areaInSqM = totalArea * 0.092903; // Convert sq ft to sq m
-    
-    return {
-      bricks: Math.round(areaInSqM * 500), // 500 bricks per sq m
-      cement_bags: Math.round(areaInSqM * 1.26), // 1.26 bags per sq m
-      steel_kg: Math.round(areaInSqM * 45), // 45 kg per sq m
-      sand_cubic_meters: Math.round(areaInSqM * 0.042 * 10) / 10, // 0.042 cubic m per sq m
-      aggregate_cubic_meters: Math.round(areaInSqM * 0.084 * 10) / 10, // 0.084 cubic m per sq m
-      excavation_cubic_meters: Math.round(areaInSqM * 0.15 * 10) / 10, // 0.15 cubic m per sq m
-      foundation_concrete: Math.round(areaInSqM * 0.05 * 10) / 10, // 0.05 cubic m per sq m
-    };
-  };
-
-  const generateMockISCompliance = (): ISCodeCompliance => {
-    const violations = [];
-    const score = Math.random() * 20 + 80; // Random score between 80-100
-    
-    if (score < 90) {
-      violations.push('Room ventilation could be improved as per IS 3362');
-    }
-    if (score < 85) {
-      violations.push('Minimum room width compliance pending (IS 962)');
-    }
-    
-    return {
-      overall_score: Math.round(score),
-      room_size_compliance: score > 85,
-      ventilation_compliance: score > 90,
-      structural_compliance: score > 88,
-      fire_safety_compliance: score > 92,
-      accessibility_compliance: score > 87,
-      violations
-    };
-  };
-
-  const generateMockFloorPlan = (description: string): FloorPlan => {
-    const rooms: Room[] = [];
-    const roomTypes = {
-      bedroom: { icon: Bed, color: 'bg-blue-100 border-blue-300', size: 'w-24 h-16' },
-      bathroom: { icon: Bath, color: 'bg-teal-100 border-teal-300', size: 'w-16 h-12' },
-      kitchen: { icon: ChefHat, color: 'bg-orange-100 border-orange-300', size: 'w-20 h-16' },
-      living: { icon: Sofa, color: 'bg-green-100 border-green-300', size: 'w-28 h-20' },
-      garage: { icon: Car, color: 'bg-gray-100 border-gray-300', size: 'w-24 h-20' }
-    };
-
-    // Use advanced form data if available
-    if (showAdvancedForm) {
-      for (let i = 0; i < formData.bedrooms; i++) {
-        rooms.push({
-          name: `Bedroom ${i + 1}`,
-          type: 'bedroom',
-          dimensions: `12' x 10'`,
-          area: '120 sq ft',
-          ...roomTypes.bedroom
-        });
-      }
-      
-      for (let i = 0; i < formData.bathrooms; i++) {
-        rooms.push({
-          name: `Bathroom ${i + 1}`,
-          type: 'bathroom',
-          dimensions: `8' x 6'`,
-          area: '48 sq ft',
-          ...roomTypes.bathroom
-        });
-      }
-      
-      if (formData.kitchen) {
-        rooms.push({
-          name: 'Kitchen',
-          type: 'kitchen',
-          dimensions: `10' x 12'`,
-          area: '120 sq ft',
-          ...roomTypes.kitchen
-        });
-      }
-      
-      if (formData.livingRoom) {
-        rooms.push({
-          name: 'Living Room',
-          type: 'living',
-          dimensions: `16' x 14'`,
-          area: '224 sq ft',
-          ...roomTypes.living
-        });
-      }
-      
-      if (formData.garage) {
-        rooms.push({
-          name: 'Garage',
-          type: 'garage',
-          dimensions: `20' x 10'`,
-          area: '200 sq ft',
-          ...roomTypes.garage
-        });
-      }
-    } else {
-      // Extract room information from description (existing logic)
-      const bedroomMatch = description.match(/(\d+)\s*bedroom/i);
-      const bathroomMatch = description.match(/(\d+)\s*bathroom/i);
-      const hasKitchen = /kitchen/i.test(description);
-      const hasLiving = /living/i.test(description);
-      const hasGarage = /garage/i.test(description);
-
-      if (bedroomMatch) {
-        const count = parseInt(bedroomMatch[1]);
-        for (let i = 0; i < count; i++) {
-          rooms.push({
-            name: `Bedroom ${i + 1}`,
-            type: 'bedroom',
-            dimensions: `12' x 10'`,
-            area: '120 sq ft',
-            ...roomTypes.bedroom
-          });
-        }
-      }
-
-      if (bathroomMatch) {
-        const count = parseInt(bathroomMatch[1]);
-        for (let i = 0; i < count; i++) {
-          rooms.push({
-            name: `Bathroom ${i + 1}`,
-            type: 'bathroom',
-            dimensions: `8' x 6'`,
-            area: '48 sq ft',
-            ...roomTypes.bathroom
-          });
-        }
-      }
-
-      if (hasKitchen) {
-        rooms.push({
-          name: 'Kitchen',
-          type: 'kitchen',
-          dimensions: `10' x 12'`,
-          area: '120 sq ft',
-          ...roomTypes.kitchen
-        });
-      }
-
-      if (hasLiving) {
-        rooms.push({
-          name: 'Living Room',
-          type: 'living',
-          dimensions: `16' x 14'`,
-          area: '224 sq ft',
-          ...roomTypes.living
-        });
-      }
-
-      if (hasGarage) {
-        rooms.push({
-          name: 'Garage',
-          type: 'garage',
-          dimensions: `20' x 10'`,
-          area: '200 sq ft',
-          ...roomTypes.garage
-        });
-      }
-    }
-
-    // Add default rooms if none specified
-    if (rooms.length === 0) {
-      rooms.push(
-        {
-          name: 'Living Room',
-          type: 'living',
-          dimensions: `16' x 14'`,
-          area: '224 sq ft',
-          ...roomTypes.living
-        },
-        {
-          name: 'Kitchen',
-          type: 'kitchen',
-          dimensions: `10' x 12'`,
-          area: '120 sq ft',
-          ...roomTypes.kitchen
-        },
-        {
-          name: 'Bedroom',
-          type: 'bedroom',
-          dimensions: `12' x 10'`,
-          area: '120 sq ft',
-          ...roomTypes.bedroom
-        },
-        {
-          name: 'Bathroom',
-          type: 'bathroom',
-          dimensions: `8' x 6'`,
-          area: '48 sq ft',
-          ...roomTypes.bathroom
-        }
-      );
-    }
-
-    const totalArea = rooms.reduce((sum, room) => sum + parseInt(room.area), 0);
-    const materialEstimate = generateMockMaterialEstimate(totalArea);
-    const isCompliance = generateMockISCompliance();
-
-    return {
-      id: Date.now().toString(),
-      name: `Floor Plan ${Date.now()}`,
-      description: showAdvancedForm ? `${formData.bedrooms}BHK ${formData.buildingType} on ${formData.plotSize}` : description,
-      rooms,
-      totalArea: totalArea + ' sq ft',
-      createdAt: new Date(),
-      exportFormats: ['DXF', 'SVG', 'PDF', 'PNG'],
-      materialEstimate,
-      isCompliance,
-      plotSize: formData.plotSize || 'Not specified',
-      floors: formData.floors || 1,
-      buildingType: formData.buildingType || 'residential'
-    };
-  };
-
-  const handleGenerate = async () => {
-    if (!input.trim() && !showAdvancedForm) return;
-    
-    if (subscription.plansRemaining <= 0) {
-      navigate('/subscription');
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Prepare plan data for the API
-      const planData = showAdvancedForm ? {
-        description: `${formData.bedrooms}BHK ${formData.buildingType} on ${formData.plotSize}`,
-        area: parseInt(formData.plotSize.split('x')[0]) * parseInt(formData.plotSize.split('x')[1]) || 1000,
-        rooms: formData.bedrooms,
-        bathrooms: formData.bathrooms,
-        location: formData.location,
-        features: [
-          ...(formData.garage ? ['garage'] : []),
-          ...(formData.studyRoom ? ['study'] : []),
-          ...(formData.diningRoom ? ['dining'] : []),
-          ...(formData.balcony ? ['balcony'] : [])
-        ]
-      } : {
-        description: input,
-        area: 1000, // Default area
-        rooms: 2,
-        bathrooms: 1,
-        location: 'India',
-        features: []
-      };
-      
-      const newPlan = await generateFloorPlan(planData);
-      
-      // Navigate to export page
-      navigate(`/export/${newPlan.id}`);
-    } catch (error) {
-      console.error('Failed to generate floor plan:', error);
-      // Fallback to mock plan for now
-      const newPlan = generateMockFloorPlan(input);
-      addPlan(newPlan);
-      navigate(`/export/${newPlan.id}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const quickTemplates = [
-    "2 bedroom apartment with open kitchen and living room",
-    "3 bedroom house with 2 bathrooms and garage",
-    "Studio apartment with kitchenette",
-    "4 bedroom family home with dining room and study"
-  ];
-
+// Landing page for non-authenticated users
+const LandingPage: React.FC = () => {
   return (
-    <div>
+    <div className="bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-teal-50 via-blue-50 to-indigo-50 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-2 mb-6">
-            <Sparkles className="h-8 w-8 text-teal-600" />
-            <span className="text-lg font-semibold text-teal-600">AI-Powered Floor Plans with IS Code Compliance</span>
-          </div>
-          
-          <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Describe your floor plan.
-            <span className="text-teal-600"> AI builds it.</span>
-          </h1>
-          
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Transform your ideas into professional floor plans with IS code compliance, 
-            material estimates, and excavation calculations - all in seconds.
-          </p>
-          
-          {/* New Features Highlight */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
-              <Shield className="h-5 w-5 text-green-600" />
-              <span className="text-sm font-medium text-gray-700">IS Code Compliant</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
-              <Ruler className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">Material Estimates</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
-              <Gift className="h-5 w-5 text-purple-600" />
-              <span className="text-sm font-medium text-gray-700">Referral Credits</span>
-            </div>
-          </div>
-          
-          {/* Subscription Status */}
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-8 max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Plans remaining:</span>
-              <span className="font-semibold text-teal-600">{subscription.plansRemaining}</span>
-            </div>
-            {subscription.referralCredits > 0 && (
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Referral credits:</span>
-                <span className="font-semibold text-purple-600">{subscription.referralCredits}</span>
-              </div>
-            )}
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div 
-                className="bg-teal-600 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${(subscription.plansRemaining / 50) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          {/* Form Toggle */}
-          <div className="flex justify-center mb-6">
-            <div className="bg-white rounded-lg shadow-sm p-1 flex">
-              <button
-                onClick={() => setShowAdvancedForm(false)}
-                className={`px-4 py-2 rounded-md transition-all duration-200 ${
-                  !showAdvancedForm 
-                    ? 'bg-teal-600 text-white' 
-                    : 'text-gray-600 hover:text-teal-600'
-                }`}
+      <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600">
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Create Professional Floor Plans with AI
+            </h1>
+            <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
+              Planix uses advanced AI to generate detailed floor plans that comply with Indian building standards. 
+              Get material estimates, IS code compliance, and professional architectural designs in minutes.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/register"
+                className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors"
               >
-                Quick Description
-              </button>
-              <button
-                onClick={() => setShowAdvancedForm(true)}
-                className={`px-4 py-2 rounded-md transition-all duration-200 ${
-                  showAdvancedForm 
-                    ? 'bg-teal-600 text-white' 
-                    : 'text-gray-600 hover:text-teal-600'
-                }`}
+                Start Free Trial
+              </Link>
+              <Link
+                to="/login"
+                className="border-2 border-white text-white hover:bg-white hover:text-indigo-600 px-8 py-3 rounded-lg font-semibold text-lg transition-colors"
               >
-                Advanced Form
-              </button>
+                Sign In
+              </Link>
             </div>
           </div>
-
-          {/* Input Form */}
-          {!showAdvancedForm ? (
-            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-3xl mx-auto">
-              <label className="block text-left text-lg font-semibold text-gray-900 mb-4">
-                Describe your floor plan:
-              </label>
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none transition-all duration-200 text-gray-700"
-                placeholder="e.g., 2 bedroom house of 1000 sq ft with kitchen, living room, and 2 bathrooms"
-              />
-              
-              {/* Quick Templates */}
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">Quick templates:</p>
-                <div className="flex flex-wrap gap-2">
-                  {quickTemplates.map((template, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setInput(template)}
-                      className="text-xs bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-600 px-3 py-1 rounded-full transition-all duration-200"
-                    >
-                      {template}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Advanced Form
-            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Detailed Requirements</h3>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Plot Size
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.plotSize}
-                    onChange={(e) => setFormData({...formData, plotSize: e.target.value})}
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="e.g., 30x40 feet"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Building Type
-                  </label>
-                  <select
-                    value={formData.buildingType}
-                    onChange={(e) => setFormData({...formData, buildingType: e.target.value as any})}
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  >
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="industrial">Industrial</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Number of Floors
-                  </label>
-                  <select
-                    value={formData.floors}
-                    onChange={(e) => setFormData({...formData, floors: parseInt(e.target.value)})}
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  >
-                    <option value={1}>1 Floor</option>
-                    <option value={2}>2 Floors</option>
-                    <option value={3}>3 Floors</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bedrooms
-                  </label>
-                  <select
-                    value={formData.bedrooms}
-                    onChange={(e) => setFormData({...formData, bedrooms: parseInt(e.target.value)})}
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  >
-                    <option value={1}>1 Bedroom</option>
-                    <option value={2}>2 Bedrooms</option>
-                    <option value={3}>3 Bedrooms</option>
-                    <option value={4}>4 Bedrooms</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bathrooms
-                  </label>
-                  <select
-                    value={formData.bathrooms}
-                    onChange={(e) => setFormData({...formData, bathrooms: parseInt(e.target.value)})}
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  >
-                    <option value={1}>1 Bathroom</option>
-                    <option value={2}>2 Bathrooms</option>
-                    <option value={3}>3 Bathrooms</option>
-                    <option value={4}>4 Bathrooms</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location (for local codes)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="e.g., Mumbai, Maharashtra"
-                  />
-                </div>
-              </div>
-              
-              {/* Additional Features */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Additional Features
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { key: 'garage', label: 'Garage', icon: Car },
-                    { key: 'studyRoom', label: 'Study Room', icon: Home },
-                    { key: 'diningRoom', label: 'Dining Room', icon: Utensils },
-                    { key: 'balcony', label: 'Balcony', icon: Home },
-                  ].map((feature) => (
-                    <label key={feature.key} className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData[feature.key as keyof typeof formData] as boolean}
-                        onChange={(e) => setFormData({...formData, [feature.key]: e.target.checked})}
-                        className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
-                      />
-                      <feature.icon className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm text-gray-700">{feature.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Special Requirements
-                </label>
-                <textarea
-                  value={formData.specialRequirements}
-                  onChange={(e) => setFormData({...formData, specialRequirements: e.target.value})}
-                  className="w-full h-20 p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
-                  placeholder="e.g., Wheelchair accessible, Home office space, etc."
-                />
-              </div>
-            </div>
-          )}
-          
-          <button
-            onClick={handleGenerate}
-            disabled={(!input.trim() && !showAdvancedForm) || isLoading || subscription.plansRemaining <= 0}
-            className="w-full max-w-3xl mt-6 bg-gradient-to-r from-teal-600 to-blue-600 text-white font-semibold py-4 px-8 rounded-xl hover:from-teal-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Generating Floor Plan with AI...</span>
-              </>
-            ) : subscription.plansRemaining <= 0 ? (
-              <>
-                <span>Upgrade to Generate More</span>
-                <ArrowRight className="h-5 w-5" />
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-5 w-5" />
-                <span>Generate AI Floor Plan</span>
-              </>
-            )}
-          </button>
         </div>
-      </section>
+      </div>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+      <div className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Why Choose Planix?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Professional-grade floor plans with AI precision, IS code compliance, and material estimates
+            <p className="text-xl text-gray-600">
+              Professional architectural solutions powered by AI
             </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6 rounded-xl hover:shadow-lg transition-all duration-300">
-              <div className="bg-teal-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="h-8 w-8 text-teal-600" />
+            <div className="text-center">
+              <div className="bg-indigo-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">AI-Powered</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">AI-Powered Generation</h3>
               <p className="text-gray-600">
-                Advanced AI with Gemini integration understands your requirements and creates optimized layouts
+                Advanced AI creates professional floor plans in minutes, not hours.
               </p>
             </div>
             
-            <div className="text-center p-6 rounded-xl hover:shadow-lg transition-all duration-300">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8 text-green-600" />
+            <div className="text-center">
+              <div className="bg-indigo-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">IS Code Compliant</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">IS Code Compliance</h3>
               <p className="text-gray-600">
-                Automatically validates against Indian Standard building codes for safety and compliance
+                All plans comply with Indian building standards and safety regulations.
               </p>
             </div>
             
-            <div className="text-center p-6 rounded-xl hover:shadow-lg transition-all duration-300">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Ruler className="h-8 w-8 text-blue-600" />
+            <div className="text-center">
+              <div className="bg-indigo-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Material Estimates</h3>
               <p className="text-gray-600">
-                Get accurate quantity estimates for bricks, cement, steel, and excavation work
+                Get accurate material quantities and cost estimates for your project.
               </p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+
+      {/* Pricing Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-xl text-gray-600">
+              Choose the plan that works best for you
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Free Plan */}
+            <div className="border rounded-lg p-8 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Free</h3>
+              <div className="text-4xl font-bold text-indigo-600 mb-4">₹0</div>
+              <ul className="text-gray-600 space-y-2 mb-6">
+                <li>3 floor plans per month</li>
+                <li>5 exports per month</li>
+                <li>Basic IS code check</li>
+                <li>Email support</li>
+              </ul>
+              <Link
+                to="/register"
+                className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 px-6 py-3 rounded-lg font-semibold transition-colors inline-block"
+              >
+                Get Started Free
+              </Link>
+            </div>
+            
+            {/* Pro Plan */}
+            <div className="border border-indigo-600 rounded-lg p-8 text-center relative">
+              <div className="absolute top-0 right-0 bg-indigo-600 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm">
+                Most Popular
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Pro</h3>
+              <div className="text-4xl font-bold text-indigo-600 mb-4">₹1,599</div>
+              <ul className="text-gray-600 space-y-2 mb-6">
+                <li>Unlimited floor plans</li>
+                <li>Unlimited exports</li>
+                <li>Advanced IS code compliance</li>
+                <li>Material cost estimation</li>
+                <li>Priority support</li>
+              </ul>
+              <Link
+                to="/register"
+                className="w-full bg-indigo-600 text-white hover:bg-indigo-700 px-6 py-3 rounded-lg font-semibold transition-colors inline-block"
+              >
+                Start Pro Trial
+              </Link>
+            </div>
+            
+            {/* Enterprise Plan */}
+            <div className="border rounded-lg p-8 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Enterprise</h3>
+              <div className="text-4xl font-bold text-indigo-600 mb-4">₹4,999</div>
+              <ul className="text-gray-600 space-y-2 mb-6">
+                <li>Everything in Pro</li>
+                <li>Team collaboration</li>
+                <li>API access</li>
+                <li>Custom integrations</li>
+                <li>Dedicated support</li>
+              </ul>
+              <Link
+                to="/register"
+                className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 px-6 py-3 rounded-lg font-semibold transition-colors inline-block"
+              >
+                Contact Sales
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="py-16 bg-indigo-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Create Your First Floor Plan?
+          </h2>
+          <p className="text-xl text-indigo-200 mb-8">
+            Join thousands of architects and designers using Planix
+          </p>
+          <Link
+            to="/register"
+            className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors inline-block"
+          >
+            Start Free Trial
+          </Link>
+        </div>
+      </div>
     </div>
   );
+};
+
+// Floor plan generation form for authenticated users
+const FloorPlanGenerator: React.FC = () => {
+  const [formData, setFormData] = useState({
+    description: '',
+    area: '',
+    rooms: '',
+    bathrooms: '',
+    location: '',
+    budget: '',
+    features: [] as string[],
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const { user, token } = useAuth();
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001/api';
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFeatureToggle = (feature: string) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.includes(feature)
+        ? prev.features.filter(f => f !== feature)
+        : [...prev.features, feature]
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch(`${API_URL}/floor-plans`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          description: formData.description,
+          area: formData.area ? parseFloat(formData.area) : undefined,
+          rooms: formData.rooms ? parseInt(formData.rooms) : undefined,
+          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
+          location: formData.location,
+          budget: formData.budget ? parseFloat(formData.budget) : undefined,
+          features: formData.features,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate floor plan');
+      }
+
+      const data = await response.json();
+      setSuccess('Floor plan generation started! Check your dashboard for updates.');
+      
+      // Reset form
+      setFormData({
+        description: '',
+        area: '',
+        rooms: '',
+        bathrooms: '',
+        location: '',
+        budget: '',
+        features: [],
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate floor plan');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const features = [
+    'open_kitchen',
+    'balcony',
+    'garden',
+    'parking',
+    'swimming_pool',
+    'terrace',
+    'study_room',
+    'prayer_room',
+    'guest_room',
+    'storage_room',
+    'master_suite',
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Generate Your Floor Plan
+          </h1>
+          <p className="text-xl text-gray-600">
+            Describe your dream space and let AI create the perfect floor plan
+          </p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                Project Description *
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows={4}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Describe your ideal floor plan (e.g., 3 bedroom house with open kitchen and master suite)"
+                value={formData.description}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Basic Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Area (sq ft) *
+                </label>
+                <input
+                  type="number"
+                  id="area"
+                  name="area"
+                  required
+                  min="100"
+                  max="10000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="1200"
+                  value={formData.area}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                  Location *
+                </label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Mumbai, Maharashtra"
+                  value={formData.location}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="rooms" className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Rooms *
+                </label>
+                <input
+                  type="number"
+                  id="rooms"
+                  name="rooms"
+                  required
+                  min="1"
+                  max="20"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="3"
+                  value={formData.rooms}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="bathrooms" className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Bathrooms *
+                </label>
+                <input
+                  type="number"
+                  id="bathrooms"
+                  name="bathrooms"
+                  required
+                  min="1"
+                  max="10"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="2"
+                  value={formData.bathrooms}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            {/* Budget */}
+            <div>
+              <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-2">
+                Budget (Optional)
+              </label>
+              <input
+                type="number"
+                id="budget"
+                name="budget"
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="2000000"
+                value={formData.budget}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Features */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Special Features
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {features.map((feature) => (
+                  <label key={feature} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.features.includes(feature)}
+                      onChange={() => handleFeatureToggle(feature)}
+                      className="mr-2 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 capitalize">
+                      {feature.replace('_', ' ')}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Error/Success Messages */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                <p className="text-sm text-green-800">{success}</p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating Floor Plan...
+                </span>
+              ) : (
+                'Generate Floor Plan'
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const HomePage: React.FC = () => {
+  const { user } = useAuth();
+
+  return user ? <FloorPlanGenerator /> : <LandingPage />;
 };
 
 export default HomePage;
