@@ -32,7 +32,12 @@ app.use(compression());
 app.use(morgan('combined'));
 app.use(limiter);
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    'https://*.vercel.app',
+    process.env.CORS_ORIGIN || 'http://localhost:3000'
+  ],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
