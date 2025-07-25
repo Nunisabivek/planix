@@ -480,25 +480,26 @@ class PlanixAPITester:
             return False
     
     def run_all_tests(self):
-        """Run all tests in sequence"""
-        print("🚀 Starting Planix Backend API Tests")
-        print("=" * 50)
+        """Run all tests in sequence for Node.js/Express API"""
+        print("🚀 Starting Planix Node.js/Express Backend API Tests")
+        print("=" * 60)
         
-        # Core functionality tests
+        # Core functionality tests in proper order
         tests = [
             self.test_health_check,
             self.test_root_endpoint,
-            self.test_create_user,
-            self.test_get_user,
-            self.test_duplicate_user_creation,
-            self.test_get_subscription,
-            self.test_generate_referral_code,
+            self.test_register_user,
+            self.test_duplicate_user_registration,
+            self.test_login_user,
+            self.test_invalid_login,
+            self.test_get_user_profile,
+            self.test_unauthorized_access,
+            self.test_get_subscription_plans,
+            self.test_get_user_subscription,
             self.test_get_referral_stats,
             self.test_generate_floor_plan,
-            self.test_get_user_plans,
-            self.test_get_plan_detail,
-            self.test_export_plan,
-            self.test_invalid_endpoints,
+            self.test_get_floor_plan_detail,
+            self.test_get_user_floor_plans,
         ]
         
         passed = 0
@@ -512,11 +513,11 @@ class PlanixAPITester:
             except Exception as e:
                 print(f"❌ FAIL {test.__name__}: Unexpected error: {str(e)}")
         
-        print("\n" + "=" * 50)
+        print("\n" + "=" * 60)
         print(f"📊 Test Results: {passed}/{total} tests passed")
         
         if passed == total:
-            print("🎉 All tests passed! Backend is working correctly.")
+            print("🎉 All tests passed! Node.js/Express backend is working correctly.")
         else:
             print(f"⚠️  {total - passed} tests failed. Check the details above.")
         
