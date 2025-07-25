@@ -377,35 +377,86 @@ class PlanixAPITester:
             self.log_test("Get Referral Stats", False, f"Exception: {str(e)}")
             return False
     
-    def test_invalid_endpoints(self):
-        """Test invalid endpoints and error handling"""
-        test_cases = [
-            ("GET", f"{BASE_URL}/users/invalid-user-id", 404),
-            ("GET", f"{BASE_URL}/plans/detail/invalid-plan-id", 404),
-            ("GET", f"{BASE_URL}/subscription/invalid-user-id", 404),
-            ("POST", f"{BASE_URL}/users/", {"email": "invalid-email"}, 422),  # Invalid email format
-        ]
-        
-        all_passed = True
-        for method, url, expected_status, *args in test_cases:
-            try:
-                if method == "GET":
-                    response = self.session.get(url, timeout=TIMEOUT)
-                elif method == "POST":
-                    json_data = args[0] if args else {}
-                    response = self.session.post(url, json=json_data, timeout=TIMEOUT)
+    def test_duplicate_user_registration(self):
+        """Test duplicate user registration (should fail)"""
+        try:
+            user_data = {
+                "email": "architect.sharma@planix.com",  # Same email as before
+                "name": "Another User",
+                "phone": "+91-1234567890",
+                "password": "AnotherPass123!"
+            }
+            
+            response = self.session.post(
+                f"{BASE_URL}/auth/register",
+                json=user_data,
+                timeout=TIMEOUT
+            )
+            
+            if response.status_code == 400:
+                self.log_test("Duplicate User Prevention", True, "Correctly rejected duplicate email")
+                return True
+            else:
+                self.log_test("Duplicate User Prevention", False, f"Should have returned 400, got {response.status_code}")
+                return False
                 
-                if response.status_code == expected_status:
-                    self.log_test(f"Error Handling - {method} {url.split('/')[-1]}", True, f"Correctly returned {expected_status}")
-                else:
-                    self.log_test(f"Error Handling - {method} {url.split('/')[-1]}", False, f"Expected {expected_status}, got {response.status_code}")
-                    all_passed = False
-                    
-            except Exception as e:
-                self.log_test(f"Error Handling - {method} {url.split('/')[-1]}", False, f"Exception: {str(e)}")
-                all_passed = False
+        except Exception as e:
+            self.log_test("Duplicate User Prevention", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_invalid_login(self):
+        """Test invalid login credentials"""
+        try:
+            login_data = {
+                "email": "architect.sharma@planix.com",
+                "password": "WrongPassword123!"
+            }
+            
+            response = self.session.post(
+                f"{BASE_URL}/auth/login",
+                json=login_data,
+                timeout=TIMEOUT
+            )
+            
+            if response.status_code == 401:
+                self.log_test("Invalid Login Prevention", True, "Correctly rejected invalid credentials")
+                return True
+            else:
+                self.log_test("Invalid Login Prevention", False, f"Should have returned 401, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Invalid Login Prevention", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_unauthorized_access(self):
+        """Test unauthorized access to protected endpoints"""
+        # Temporarily remove auth header
+        original_auth = self.session.headers.get('Authorization')
+        self.session.headers.pop('Authorization', None)
         
-        return all_passed
+        try:
+            response = self.session.get(
+                f"{BASE_URL}/user/profile",
+                timeout=TIMEOUT
+            )
+            
+            if response.status_code == 401:
+                self.log_test("Unauthorized Access Prevention", True, "Correctly rejected unauthorized request")
+                success = True
+            else:
+                self.log_test("Unauthorized Access Prevention", False, f"Should have returned 401, got {response.status_code}")
+                success = False
+                
+        except Exception as e:
+            self.log_test("Unauthorized Access Prevention", False, f"Exception: {str(e)}")
+            success = False
+        finally:
+            # Restore auth header
+            if original_auth:
+                self.session.headers['Authorization'] = original_auth
+        
+        return success
     
     def test_root_endpoint(self):
         """Test root API endpoint"""
