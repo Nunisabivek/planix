@@ -106,7 +106,7 @@ const startServer = async () => {
   try {
     await connectDB();
     
-    app.listen(PORT, '0.0.0.0', () => {
+    app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`🚀 Planix Backend Server running on port ${PORT}`);
       console.log(`📖 API Documentation: http://localhost:${PORT}/api`);
       console.log(`💾 Database: MongoDB`);
