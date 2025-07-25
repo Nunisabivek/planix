@@ -5,7 +5,6 @@ import {
   Home, Users, MapPin, Ruler, AlertCircle, Award, Gift, Shield
 } from 'lucide-react';
 import { usePlans } from '../context/PlanContext';
-import { FloorPlan, Room, MaterialEstimate, ISCodeCompliance } from '../context/PlanContext';
 
 const HomePage: React.FC = () => {
   const [input, setInput] = useState('');
