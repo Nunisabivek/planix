@@ -8,11 +8,19 @@ import os
 from dotenv import load_dotenv
 import uuid
 from datetime import datetime, timedelta
-import httpx
-import json
+import asyncio
 
 # Load environment variables
 load_dotenv()
+
+# Import services and database
+from services.deepseek_service import DeepSeekService
+from database.connection import connect_to_mongo, close_mongo_connection, get_database
+from database.models import FloorPlan, User, Subscription, ReferralProgram, PLAN_CONFIGS
+from database.connection import (
+    USERS_COLLECTION, FLOOR_PLANS_COLLECTION, SUBSCRIPTIONS_COLLECTION,
+    REFERRALS_COLLECTION, MATERIAL_ESTIMATES_COLLECTION, IS_CODE_COMPLIANCE_COLLECTION
+)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -33,11 +41,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database connection (placeholder - will be implemented with MongoDB)
-# from database import get_database
-# db = get_database()
+# Initialize services
+deepseek_service = DeepSeekService()
 
-# Pydantic models
+# Pydantic models for API
 class FloorPlanRequest(BaseModel):
     description: str
     area: Optional[float] = None
@@ -67,6 +74,20 @@ class UserSubscription(BaseModel):
 class ReferralRequest(BaseModel):
     user_id: str
     referral_code: Optional[str] = None
+
+class UserCreateRequest(BaseModel):
+    email: str
+    name: str
+    phone: Optional[str] = None
+
+# Database startup/shutdown events
+@app.on_event("startup")
+async def startup_db_client():
+    await connect_to_mongo()
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    await close_mongo_connection()
 
 # Health check endpoint
 @app.get("/api/health")
