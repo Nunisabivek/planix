@@ -166,47 +166,36 @@ class PlanixAPITester:
             return False
     
     def test_generate_floor_plan(self):
-        """Test floor plan generation endpoint"""
-        if not self.test_user_id:
-            self.log_test("Generate Floor Plan", False, "No test user ID available")
+        """Test floor plan generation endpoint with real AI"""
+        if not self.auth_token:
+            self.log_test("Generate Floor Plan", False, "No auth token available")
             return False
             
         try:
             plan_request = {
                 "description": "Modern 3BHK apartment with open kitchen, spacious living room, master bedroom with attached bathroom, two additional bedrooms, guest bathroom, and balcony. Located in Mumbai with good ventilation and natural light.",
-                "area": 1200.0,
+                "area": 1200,
                 "rooms": 3,
                 "bathrooms": 2,
                 "location": "Mumbai, Maharashtra",
-                "budget": 2500000.0,
-                "features": ["open_kitchen", "balcony", "master_suite", "guest_bathroom", "storage_room"],
-                "user_id": self.test_user_id
+                "budget": 2500000,
+                "features": ["open_kitchen", "balcony", "master_suite", "guest_bathroom", "storage_room"]
             }
             
             response = self.session.post(
-                f"{BASE_URL}/generate-floor-plan",
+                f"{BASE_URL}/floor-plans",
                 json=plan_request,
                 timeout=TIMEOUT
             )
             
-            if response.status_code == 200:
+            if response.status_code == 201:
                 data = response.json()
-                required_fields = ["id", "description", "generated_plan", "material_estimate", "is_code_compliance", "created_at", "user_id"]
-                
-                if all(field in data for field in required_fields):
-                    self.test_plan_id = data["id"]
-                    
-                    # Check material estimate structure
-                    material_estimate = data["material_estimate"]
-                    if "bricks" in material_estimate and "cement" in material_estimate:
-                        self.log_test("Generate Floor Plan", True, f"Floor plan generated with ID: {self.test_plan_id}")
-                        return True
-                    else:
-                        self.log_test("Generate Floor Plan", False, f"Invalid material estimate structure: {material_estimate}")
-                        return False
+                if data.get("success") and "floorPlan" in data:
+                    self.test_plan_id = data["floorPlan"]["id"]
+                    self.log_test("Generate Floor Plan", True, f"Floor plan generation initiated with ID: {self.test_plan_id}")
+                    return True
                 else:
-                    missing_fields = [field for field in required_fields if field not in data]
-                    self.log_test("Generate Floor Plan", False, f"Missing fields: {missing_fields}")
+                    self.log_test("Generate Floor Plan", False, f"Invalid response structure: {data}")
                     return False
             else:
                 self.log_test("Generate Floor Plan", False, f"HTTP {response.status_code}: {response.text}")
@@ -216,103 +205,169 @@ class PlanixAPITester:
             self.log_test("Generate Floor Plan", False, f"Exception: {str(e)}")
             return False
     
-    def test_get_subscription(self):
-        """Test get user subscription endpoint"""
-        if not self.test_user_id:
-            self.log_test("Get Subscription", False, "No test user ID available")
+    def test_get_floor_plan_detail(self):
+        """Test get floor plan detail endpoint"""
+        if not self.test_plan_id or not self.auth_token:
+            self.log_test("Get Floor Plan Detail", False, "No test plan ID or auth token available")
+            return False
+            
+        # Wait for plan generation to complete
+        time.sleep(5)
+            
+        try:
+            response = self.session.get(
+                f"{BASE_URL}/floor-plans/{self.test_plan_id}",
+                timeout=TIMEOUT
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") and "floorPlan" in data:
+                    plan = data["floorPlan"]
+                    if plan.get("status") == "completed":
+                        self.log_test("Get Floor Plan Detail", True, f"Floor plan completed with AI generation")
+                        return True
+                    elif plan.get("status") == "generating":
+                        self.log_test("Get Floor Plan Detail", True, f"Floor plan still generating (expected)")
+                        return True
+                    else:
+                        self.log_test("Get Floor Plan Detail", False, f"Plan status: {plan.get('status')}")
+                        return False
+                else:
+                    self.log_test("Get Floor Plan Detail", False, f"Invalid response structure: {data}")
+                    return False
+            else:
+                self.log_test("Get Floor Plan Detail", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Get Floor Plan Detail", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_get_user_floor_plans(self):
+        """Test get user's floor plans endpoint"""
+        if not self.auth_token:
+            self.log_test("Get User Floor Plans", False, "No auth token available")
             return False
             
         try:
             response = self.session.get(
-                f"{BASE_URL}/subscription/{self.test_user_id}",
+                f"{BASE_URL}/floor-plans/user/me",
                 timeout=TIMEOUT
             )
             
             if response.status_code == 200:
                 data = response.json()
-                required_fields = ["user_id", "plan_type", "status", "plans_remaining", "exports_remaining", "features"]
-                
-                if all(field in data for field in required_fields):
-                    if data["plan_type"] == "free" and data["status"] == "active":
-                        self.log_test("Get Subscription", True, f"Subscription retrieved: {data['plan_type']} plan")
+                if data.get("success") and "floorPlans" in data:
+                    plans = data["floorPlans"]
+                    if isinstance(plans, list):
+                        self.log_test("Get User Floor Plans", True, f"Retrieved {len(plans)} floor plans")
                         return True
                     else:
-                        self.log_test("Get Subscription", False, f"Unexpected subscription data: {data}")
+                        self.log_test("Get User Floor Plans", False, f"Invalid plans data: {plans}")
                         return False
                 else:
-                    missing_fields = [field for field in required_fields if field not in data]
-                    self.log_test("Get Subscription", False, f"Missing fields: {missing_fields}")
+                    self.log_test("Get User Floor Plans", False, f"Invalid response structure: {data}")
                     return False
             else:
-                self.log_test("Get Subscription", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Get User Floor Plans", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Get Subscription", False, f"Exception: {str(e)}")
+            self.log_test("Get User Floor Plans", False, f"Exception: {str(e)}")
             return False
     
-    def test_generate_referral_code(self):
-        """Test referral code generation"""
-        if not self.test_user_id:
-            self.log_test("Generate Referral Code", False, "No test user ID available")
+    def test_get_subscription_plans(self):
+        """Test get subscription plans endpoint"""
+        try:
+            response = self.session.get(
+                f"{BASE_URL}/subscriptions/plans",
+                timeout=TIMEOUT
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") and "plans" in data:
+                    plans = data["plans"]
+                    if "free" in plans and "pro" in plans:
+                        pro_price = plans["pro"]["price"]
+                        if pro_price == 1599:  # Updated price
+                            self.log_test("Get Subscription Plans", True, f"Plans retrieved - Pro: ₹{pro_price}/month")
+                            return True
+                        else:
+                            self.log_test("Get Subscription Plans", False, f"Pro price mismatch: {pro_price}")
+                            return False
+                    else:
+                        self.log_test("Get Subscription Plans", False, f"Missing plan types: {plans}")
+                        return False
+                else:
+                    self.log_test("Get Subscription Plans", False, f"Invalid response structure: {data}")
+                    return False
+            else:
+                self.log_test("Get Subscription Plans", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Get Subscription Plans", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_get_user_subscription(self):
+        """Test get user subscription endpoint"""
+        if not self.auth_token:
+            self.log_test("Get User Subscription", False, "No auth token available")
             return False
             
         try:
-            referral_request = {
-                "user_id": self.test_user_id
-            }
-            
-            response = self.session.post(
-                f"{BASE_URL}/referral/generate",
-                json=referral_request,
+            response = self.session.get(
+                f"{BASE_URL}/subscriptions/me",
                 timeout=TIMEOUT
             )
             
             if response.status_code == 200:
                 data = response.json()
-                required_fields = ["user_id", "referral_code", "credits_earned", "total_referrals"]
-                
-                if all(field in data for field in required_fields):
-                    if data["referral_code"].startswith("PLANIX"):
-                        self.log_test("Generate Referral Code", True, f"Referral code: {data['referral_code']}")
+                if data.get("success") and "subscription" in data:
+                    subscription = data["subscription"]
+                    if subscription.get("planType") == "free":
+                        self.log_test("Get User Subscription", True, f"Subscription: {subscription['planType']} plan")
                         return True
                     else:
-                        self.log_test("Generate Referral Code", False, f"Invalid referral code format: {data['referral_code']}")
+                        self.log_test("Get User Subscription", False, f"Unexpected plan type: {subscription}")
                         return False
                 else:
-                    missing_fields = [field for field in required_fields if field not in data]
-                    self.log_test("Generate Referral Code", False, f"Missing fields: {missing_fields}")
+                    self.log_test("Get User Subscription", False, f"Invalid response structure: {data}")
                     return False
             else:
-                self.log_test("Generate Referral Code", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Get User Subscription", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Generate Referral Code", False, f"Exception: {str(e)}")
+            self.log_test("Get User Subscription", False, f"Exception: {str(e)}")
             return False
     
     def test_get_referral_stats(self):
-        """Test get referral statistics"""
-        if not self.test_user_id:
-            self.log_test("Get Referral Stats", False, "No test user ID available")
+        """Test get referral statistics endpoint"""
+        if not self.auth_token:
+            self.log_test("Get Referral Stats", False, "No auth token available")
             return False
             
         try:
             response = self.session.get(
-                f"{BASE_URL}/referral/{self.test_user_id}",
+                f"{BASE_URL}/referrals/me",
                 timeout=TIMEOUT
             )
             
             if response.status_code == 200:
                 data = response.json()
-                required_fields = ["user_id", "referral_code", "credits_earned", "total_referrals", "active_referrals"]
-                
-                if all(field in data for field in required_fields):
-                    self.log_test("Get Referral Stats", True, f"Referral stats retrieved")
-                    return True
+                if data.get("success") and "referral" in data:
+                    referral = data["referral"]
+                    if "code" in referral and referral["code"].startswith("PLANIX"):
+                        self.log_test("Get Referral Stats", True, f"Referral code: {referral['code']}")
+                        return True
+                    else:
+                        self.log_test("Get Referral Stats", False, f"Invalid referral code: {referral}")
+                        return False
                 else:
-                    missing_fields = [field for field in required_fields if field not in data]
-                    self.log_test("Get Referral Stats", False, f"Missing fields: {missing_fields}")
+                    self.log_test("Get Referral Stats", False, f"Invalid response structure: {data}")
                     return False
             else:
                 self.log_test("Get Referral Stats", False, f"HTTP {response.status_code}: {response.text}")
@@ -320,100 +375,6 @@ class PlanixAPITester:
                 
         except Exception as e:
             self.log_test("Get Referral Stats", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_get_user_plans(self):
-        """Test get user's floor plans"""
-        if not self.test_user_id:
-            self.log_test("Get User Plans", False, "No test user ID available")
-            return False
-            
-        try:
-            response = self.session.get(
-                f"{BASE_URL}/plans/{self.test_user_id}",
-                timeout=TIMEOUT
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if "plans" in data and isinstance(data["plans"], list):
-                    if len(data["plans"]) > 0:
-                        self.log_test("Get User Plans", True, f"Retrieved {len(data['plans'])} plans")
-                        return True
-                    else:
-                        self.log_test("Get User Plans", True, "No plans found (expected for new user)")
-                        return True
-                else:
-                    self.log_test("Get User Plans", False, f"Invalid response structure: {data}")
-                    return False
-            else:
-                self.log_test("Get User Plans", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Get User Plans", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_get_plan_detail(self):
-        """Test get plan detail endpoint"""
-        if not self.test_plan_id:
-            self.log_test("Get Plan Detail", False, "No test plan ID available")
-            return False
-            
-        try:
-            response = self.session.get(
-                f"{BASE_URL}/plans/detail/{self.test_plan_id}",
-                timeout=TIMEOUT
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                required_fields = ["id", "user_id", "description", "generated_plan", "material_estimate"]
-                
-                if all(field in data for field in required_fields):
-                    self.log_test("Get Plan Detail", True, f"Plan details retrieved")
-                    return True
-                else:
-                    missing_fields = [field for field in required_fields if field not in data]
-                    self.log_test("Get Plan Detail", False, f"Missing fields: {missing_fields}")
-                    return False
-            else:
-                self.log_test("Get Plan Detail", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Get Plan Detail", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_export_plan(self):
-        """Test plan export endpoint"""
-        if not self.test_plan_id:
-            self.log_test("Export Plan", False, "No test plan ID available")
-            return False
-            
-        try:
-            response = self.session.post(
-                f"{BASE_URL}/plans/{self.test_plan_id}/export",
-                timeout=TIMEOUT
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                required_fields = ["message", "plan_id", "export_count"]
-                
-                if all(field in data for field in required_fields):
-                    self.log_test("Export Plan", True, f"Plan exported successfully")
-                    return True
-                else:
-                    missing_fields = [field for field in required_fields if field not in data]
-                    self.log_test("Export Plan", False, f"Missing fields: {missing_fields}")
-                    return False
-            else:
-                self.log_test("Export Plan", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Export Plan", False, f"Exception: {str(e)}")
             return False
     
     def test_invalid_endpoints(self):
