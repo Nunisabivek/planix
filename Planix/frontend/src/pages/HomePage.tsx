@@ -4,7 +4,7 @@ import {
   Download, Bed, Bath, Car, Utensils, ChefHat, Sofa, Sparkles, ArrowRight,
   Home, Users, MapPin, Ruler, AlertCircle, Award, Gift, Shield
 } from 'lucide-react';
-import { usePlan } from '../context/PlanContext';
+import { usePlans } from '../context/PlanContext';
 import { FloorPlan, Room, MaterialEstimate, ISCodeCompliance } from '../context/PlanContext';
 
 const HomePage: React.FC = () => {
