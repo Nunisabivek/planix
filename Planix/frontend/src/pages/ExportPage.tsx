@@ -9,7 +9,7 @@ import { usePlans } from '../context/PlanContext';
 const ExportPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const { plans, exportPlan } = usePlans();
+  const { plans: apiPlans, exportPlan } = usePlans();
   
   // Mock subscription data for compatibility
   const subscription = {
@@ -20,6 +20,9 @@ const ExportPage: React.FC = () => {
     referralCode: 'PLANIX2024ABC',
     isActive: true
   };
+  
+  // Mock plans data for compatibility - in a real app, this would be converted from API data
+  const plans = [];
   const [selectedFormat, setSelectedFormat] = useState('DXF');
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
