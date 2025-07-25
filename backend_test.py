@@ -68,8 +68,10 @@ class PlanixAPITester:
     def test_register_user(self):
         """Test user registration endpoint"""
         try:
+            # Use timestamp to ensure unique email
+            timestamp = str(int(time.time()))
             user_data = {
-                "email": "architect.sharma@planix.com",
+                "email": f"architect.sharma.{timestamp}@planix.com",
                 "name": "Rajesh Sharma",
                 "phone": "+91-9876543210",
                 "password": "SecurePass123!"
@@ -86,6 +88,7 @@ class PlanixAPITester:
                 if data.get("success") and "user" in data and "token" in data:
                     self.test_user_id = data["user"]["id"]
                     self.auth_token = data["token"]
+                    self.test_email = user_data["email"]  # Store for login test
                     self.set_auth_header(self.auth_token)
                     self.log_test("Register User", True, f"User registered with ID: {self.test_user_id}")
                     return True
@@ -104,7 +107,7 @@ class PlanixAPITester:
         """Test user login endpoint"""
         try:
             login_data = {
-                "email": "architect.sharma@planix.com",
+                "email": getattr(self, 'test_email', 'architect.sharma@planix.com'),
                 "password": "SecurePass123!"
             }
             
