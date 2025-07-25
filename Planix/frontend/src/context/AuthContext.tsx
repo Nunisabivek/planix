@@ -66,15 +66,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(data.user);
             setToken(savedToken);
           } else {
+            // Token is invalid, remove it
             localStorage.removeItem('token');
             setToken(null);
+            setUser(null);
           }
         } catch (error) {
           console.error('Auth initialization error:', error);
           localStorage.removeItem('token');
           setToken(null);
+          setUser(null);
         }
       }
+      // Always set loading to false, regardless of token existence or success/failure
       setLoading(false);
     };
 
