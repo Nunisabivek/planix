@@ -524,7 +524,7 @@ class PlanixAPITester:
         return passed, total, self.test_results
 
 def main():
-    """Main test execution"""
+    """Main test execution for Node.js/Express Planix API"""
     tester = PlanixAPITester()
     passed, total, results = tester.run_all_tests()
     
@@ -535,7 +535,8 @@ def main():
                 "passed": passed,
                 "total": total,
                 "success_rate": f"{(passed/total)*100:.1f}%",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
+                "api_type": "Node.js/Express with MongoDB and DeepSeek AI"
             },
             "detailed_results": results
         }, f, indent=2)
