@@ -31,13 +31,24 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
 app.use(limiter);
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  process.env.CORS_ORIGIN || 'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001', 
-    'https://*.vercel.app',
-    process.env.CORS_ORIGIN || 'http://localhost:3000'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list or is a vercel domain
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'), false);
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
