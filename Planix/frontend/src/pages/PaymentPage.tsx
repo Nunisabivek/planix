@@ -6,7 +6,12 @@ import { usePlans } from '../context/PlanContext';
 const PaymentPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { updateSubscription } = usePlan();
+  const { currentUser } = usePlans();
+  
+  const updateSubscription = (newSubscription: any) => {
+    // This would be handled by the backend in the new system
+    console.log('Update subscription:', newSubscription);
+  };
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   
