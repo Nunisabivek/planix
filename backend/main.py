@@ -318,32 +318,123 @@ async def get_user_subscription(user_id: str):
 
 @app.post("/api/referral/generate")
 async def generate_referral_code(request: ReferralRequest):
-    """
-    Generate referral code for user
-    """
-    referral_code = f"PLANIX{request.user_id[:6].upper()}{str(uuid.uuid4())[:4].upper()}"
+    """Generate referral code for user"""
+    db = get_database()
     
-    # TODO: Save to database
+    # Get user info
+    user = await db[USERS_COLLECTION].find_one({"id": request.user_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Return existing referral code if user already has one
+    if user.get("referral_code"):
+        referral_code = user["referral_code"]
+    else:
+        # Generate new referral code
+        referral_code = f"PLANIX{request.user_id[:6].upper()}{str(uuid.uuid4())[:4].upper()}"
+        
+        # Update user with referral code
+        await db[USERS_COLLECTION].update_one(
+            {"id": request.user_id},
+            {"$set": {"referral_code": referral_code}}
+        )
     
     return {
         "user_id": request.user_id,
         "referral_code": referral_code,
-        "credits_earned": 0,
-        "total_referrals": 0
+        "credits_earned": user.get("referral_credits", 0),
+        "total_referrals": user.get("total_referrals", 0)
     }
 
 @app.get("/api/referral/{user_id}")
 async def get_referral_stats(user_id: str):
-    """
-    Get referral statistics for user
-    """
-    # TODO: Implement database lookup
+    """Get referral statistics for user"""
+    db = get_database()
+    
+    # Get user info
+    user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Count active referrals
+    active_referrals = await db[REFERRALS_COLLECTION].count_documents({
+        "referrer_user_id": user_id,
+        "status": "active"
+    })
+    
     return {
         "user_id": user_id,
-        "referral_code": f"PLANIX{user_id[:6].upper()}ABCD",
-        "credits_earned": 150,
-        "total_referrals": 3,
-        "active_referrals": 2
+        "referral_code": user.get("referral_code", ""),
+        "credits_earned": user.get("referral_credits", 0),
+        "total_referrals": user.get("total_referrals", 0),
+        "active_referrals": active_referrals
+    }
+
+@app.post("/api/referral/apply")
+async def apply_referral_code(request: ReferralRequest):
+    """Apply referral code for new user"""
+    db = get_database()
+    
+    # Find referrer by referral code
+    referrer = await db[USERS_COLLECTION].find_one({"referral_code": request.referral_code})
+    if not referrer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid referral code"
+        )
+    
+    # Check if user exists
+    user = await db[USERS_COLLECTION].find_one({"id": request.user_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Check if user already has a referrer
+    if user.get("referred_by"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already has a referrer"
+        )
+    
+    # Update user with referrer info
+    await db[USERS_COLLECTION].update_one(
+        {"id": request.user_id},
+        {"$set": {"referred_by": referrer["id"]}}
+    )
+    
+    # Create referral record
+    referral = ReferralProgram(
+        referrer_user_id=referrer["id"],
+        referred_user_id=request.user_id,
+        referral_code=request.referral_code,
+        status="active"
+    )
+    
+    await db[REFERRALS_COLLECTION].insert_one(referral.dict())
+    
+    # Update referrer's stats
+    await db[USERS_COLLECTION].update_one(
+        {"id": referrer["id"]},
+        {
+            "$inc": {
+                "total_referrals": 1,
+                "referral_credits": 50  # Award 50 credits for successful referral
+            }
+        }
+    )
+    
+    return {
+        "message": "Referral applied successfully",
+        "referrer_id": referrer["id"],
+        "credits_awarded": 50
     }
 
 @app.get("/api/plans/{user_id}")
