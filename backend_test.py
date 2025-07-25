@@ -151,7 +151,8 @@ class PlanixAPITester:
                 data = response.json()
                 if data.get("success") and "user" in data:
                     user = data["user"]
-                    if user.get("email") == "architect.sharma@planix.com":
+                    expected_email = getattr(self, 'test_email', 'architect.sharma@planix.com')
+                    if user.get("email") == expected_email:
                         self.log_test("Get User Profile", True, f"Profile retrieved for: {user['name']}")
                         return True
                     else:
