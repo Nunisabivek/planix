@@ -277,18 +277,43 @@ async def generate_floor_plan(request: FloorPlanRequest):
 
 @app.get("/api/subscription/{user_id}")
 async def get_user_subscription(user_id: str):
-    """
-    Get user subscription details
-    """
-    # TODO: Implement database lookup
-    # For now, return mock data
+    """Get user subscription details"""
+    db = get_database()
+    
+    # Get user info
+    user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Get subscription info
+    subscription = await db[SUBSCRIPTIONS_COLLECTION].find_one({"user_id": user_id})
+    if not subscription:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Subscription not found"
+        )
+    
+    # Get plan configuration
+    plan_config = PLAN_CONFIGS.get(subscription["plan_type"], PLAN_CONFIGS["free"])
+    
+    # Calculate remaining usage
+    plans_remaining = max(0, plan_config["monthly_plans_limit"] - user["plans_used"]) if plan_config["monthly_plans_limit"] > 0 else -1
+    exports_remaining = max(0, plan_config["monthly_exports_limit"] - user["exports_used"]) if plan_config["monthly_exports_limit"] > 0 else -1
+    
     return {
         "user_id": user_id,
-        "plan_type": "free",
-        "status": "active",
-        "plans_remaining": 3,
-        "exports_remaining": 5,
-        "created_at": datetime.now().isoformat()
+        "plan_type": subscription["plan_type"],
+        "status": subscription["status"],
+        "plans_remaining": plans_remaining,
+        "exports_remaining": exports_remaining,
+        "plans_used": user["plans_used"],
+        "exports_used": user["exports_used"],
+        "created_at": subscription["created_at"],
+        "expires_at": subscription.get("expires_at"),
+        "features": plan_config["features"]
     }
 
 @app.post("/api/referral/generate")
