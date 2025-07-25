@@ -50,6 +50,15 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const AppContent: React.FC = () => {
+  const { loading } = useAuth();
+  
+  // Debug logging
+  console.log('🔍 App: AppContent rendering, loading:', loading);
+  
+  if (loading) {
+    console.log('⏳ App: Still loading, showing loading screen');
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
