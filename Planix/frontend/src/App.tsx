@@ -50,11 +50,9 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const AppContent: React.FC = () => {
-  const { user } = useAuth();
-  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {user && <Header />}
+      <Header />
       <main className="flex-1">
         <Routes>
           {/* Public Routes */}
@@ -103,10 +101,10 @@ const AppContent: React.FC = () => {
           } />
           
           {/* Redirect unknown routes */}
-          <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {user && <Footer />}
+      <Footer />
     </div>
   );
 };
