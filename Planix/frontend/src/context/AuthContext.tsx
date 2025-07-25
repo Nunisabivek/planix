@@ -51,15 +51,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
-      console.log('🔄 AuthContext: Starting initialization...');
       const savedToken = localStorage.getItem('token');
       
       if (savedToken) {
-        console.log('🔑 AuthContext: Found saved token, validating...');
         try {
-          // Add timeout to prevent hanging
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
           
           const response = await fetch(`${API_URL}/user/profile`, {
             headers: {
@@ -73,28 +70,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (response.ok) {
             const data = await response.json();
-            console.log('✅ AuthContext: User authenticated successfully');
             setUser(data.user);
             setToken(savedToken);
           } else {
-            console.log('❌ AuthContext: Token invalid, removing...');
             localStorage.removeItem('token');
             setToken(null);
             setUser(null);
           }
         } catch (error) {
-          console.error('❌ AuthContext initialization error:', error);
           localStorage.removeItem('token');
           setToken(null);
           setUser(null);
         }
       } else {
-        console.log('ℹ️ AuthContext: No saved token found');
         setUser(null);
         setToken(null);
       }
       
-      console.log('✅ AuthContext: Initialization complete, setting loading to false');
       setLoading(false);
     };
 
