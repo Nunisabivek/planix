@@ -318,15 +318,42 @@ const HomePage: React.FC = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    const newPlan = generateMockFloorPlan(input);
-    addPlan(newPlan);
-    setIsLoading(false);
-    
-    // Navigate to export page
-    navigate(`/export/${newPlan.id}`);
+    try {
+      // Prepare plan data for the API
+      const planData = showAdvancedForm ? {
+        description: `${formData.bedrooms}BHK ${formData.buildingType} on ${formData.plotSize}`,
+        area: parseInt(formData.plotSize.split('x')[0]) * parseInt(formData.plotSize.split('x')[1]) || 1000,
+        rooms: formData.bedrooms,
+        bathrooms: formData.bathrooms,
+        location: formData.location,
+        features: [
+          ...(formData.garage ? ['garage'] : []),
+          ...(formData.studyRoom ? ['study'] : []),
+          ...(formData.diningRoom ? ['dining'] : []),
+          ...(formData.balcony ? ['balcony'] : [])
+        ]
+      } : {
+        description: input,
+        area: 1000, // Default area
+        rooms: 2,
+        bathrooms: 1,
+        location: 'India',
+        features: []
+      };
+      
+      const newPlan = await generateFloorPlan(planData);
+      
+      // Navigate to export page
+      navigate(`/export/${newPlan.id}`);
+    } catch (error) {
+      console.error('Failed to generate floor plan:', error);
+      // Fallback to mock plan for now
+      const newPlan = generateMockFloorPlan(input);
+      addPlan(newPlan);
+      navigate(`/export/${newPlan.id}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const quickTemplates = [
