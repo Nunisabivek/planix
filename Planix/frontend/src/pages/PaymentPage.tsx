@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, Lock, ArrowLeft, Check } from 'lucide-react';
-import { usePlan } from '../context/PlanContext';
+import { usePlans } from '../context/PlanContext';
 
 const PaymentPage: React.FC = () => {
   const location = useLocation();
