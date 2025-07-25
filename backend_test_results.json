@@ -3,7 +3,7 @@
     "passed": 11,
     "total": 14,
     "success_rate": "78.6%",
-    "timestamp": "2025-07-25T19:03:58.498152",
+    "timestamp": "2025-07-25T19:05:07.075237",
     "api_type": "Node.js/Express with MongoDB and DeepSeek AI"
   },
   "detailed_results": [
@@ -11,85 +11,85 @@
       "test": "Health Check",
       "success": true,
       "details": "API is healthy - Version: 2.0.0",
-      "timestamp": "2025-07-25T19:03:50.231179"
+      "timestamp": "2025-07-25T19:04:54.230303"
     },
     {
       "test": "Root Endpoint",
       "success": false,
       "details": "HTTP 404: {\"error\":\"Not Found\",\"message\":\"Route /api/ not found\"}",
-      "timestamp": "2025-07-25T19:03:50.735209"
+      "timestamp": "2025-07-25T19:04:54.734672"
     },
     {
       "test": "Register User",
-      "success": true,
-      "details": "User registered with ID: 1686dc06-9086-4d80-9789-94de66425766",
-      "timestamp": "2025-07-25T19:03:51.652990"
+      "success": false,
+      "details": "HTTP 400: {\"error\":\"User already exists\",\"message\":\"A user with this email already exists\"}",
+      "timestamp": "2025-07-25T19:04:55.241563"
     },
     {
       "test": "Duplicate User Prevention",
       "success": true,
       "details": "Correctly rejected duplicate email",
-      "timestamp": "2025-07-25T19:03:52.161090"
+      "timestamp": "2025-07-25T19:04:55.747882"
     },
     {
       "test": "Login User",
       "success": true,
       "details": "Login successful for user: Rajesh Sharma",
-      "timestamp": "2025-07-25T19:03:53.039079"
+      "timestamp": "2025-07-25T19:04:56.631609"
     },
     {
       "test": "Invalid Login Prevention",
       "success": true,
       "details": "Correctly rejected invalid credentials",
-      "timestamp": "2025-07-25T19:03:53.922472"
+      "timestamp": "2025-07-25T19:04:57.497375"
     },
     {
       "test": "Get User Profile",
       "success": true,
       "details": "Profile retrieved for: Rajesh Sharma",
-      "timestamp": "2025-07-25T19:03:54.436740"
+      "timestamp": "2025-07-25T19:04:58.009133"
     },
     {
       "test": "Unauthorized Access Prevention",
       "success": true,
       "details": "Correctly rejected unauthorized request",
-      "timestamp": "2025-07-25T19:03:54.941709"
+      "timestamp": "2025-07-25T19:04:58.512658"
     },
     {
       "test": "Get Subscription Plans",
       "success": true,
       "details": "Plans retrieved - Pro: \u20b91599/month",
-      "timestamp": "2025-07-25T19:03:55.447189"
+      "timestamp": "2025-07-25T19:04:59.016624"
     },
     {
       "test": "Get User Subscription",
       "success": true,
       "details": "Subscription: free plan",
-      "timestamp": "2025-07-25T19:03:55.957019"
+      "timestamp": "2025-07-25T19:04:59.527427"
     },
     {
       "test": "Get Referral Stats",
       "success": true,
       "details": "Referral code: PLANIXY9TDQ57K",
-      "timestamp": "2025-07-25T19:03:56.467393"
+      "timestamp": "2025-07-25T19:05:00.037493"
     },
     {
       "test": "Generate Floor Plan",
-      "success": false,
-      "details": "HTTP 500: {\"error\":\"Failed to create floor plan\",\"message\":\"FloorPlan validation failed: generatedPlan: Path `generatedPlan` is required.\"}",
-      "timestamp": "2025-07-25T19:03:56.986294"
+      "success": true,
+      "details": "Floor plan generation initiated with ID: 9e951249-af62-49cd-addd-96aed004a8e0",
+      "timestamp": "2025-07-25T19:05:00.554422"
     },
     {
       "test": "Get Floor Plan Detail",
       "success": false,
-      "details": "No test plan ID or auth token available",
-      "timestamp": "2025-07-25T19:03:57.486458"
+      "details": "Plan status: failed",
+      "timestamp": "2025-07-25T19:05:06.063878"
     },
     {
       "test": "Get User Floor Plans",
       "success": true,
-      "details": "Retrieved 0 floor plans",
-      "timestamp": "2025-07-25T19:03:57.997831"
+      "details": "Retrieved 1 floor plans",
+      "timestamp": "2025-07-25T19:05:06.574848"
     }
   ]
 }
