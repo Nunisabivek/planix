@@ -56,7 +56,22 @@ const HomePage: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showAdvancedForm, setShowAdvancedForm] = useState(false);
-  const { addPlan, subscription } = usePlan();
+  const { generateFloorPlan, currentUser } = usePlans();
+  
+  // Mock subscription data for compatibility
+  const subscription = {
+    plan: 'free' as 'free' | 'pro' | 'enterprise',
+    plansRemaining: 3,
+    exportsRemaining: 5,
+    referralCredits: 0,
+    referralCode: 'PLANIX2024ABC',
+    isActive: true
+  };
+  
+  const addPlan = (plan: FloorPlan) => {
+    // This is now handled by generateFloorPlan
+    console.log('Plan added:', plan);
+  };
   const navigate = useNavigate();
 
   // Advanced form state
