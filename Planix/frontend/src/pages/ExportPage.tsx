@@ -9,7 +9,17 @@ import { usePlans } from '../context/PlanContext';
 const ExportPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const { plans, subscription } = usePlan();
+  const { plans, exportPlan } = usePlans();
+  
+  // Mock subscription data for compatibility
+  const subscription = {
+    plan: 'free' as 'free' | 'pro' | 'enterprise',
+    plansRemaining: 3,
+    exportsRemaining: 5,
+    referralCredits: 0,
+    referralCode: 'PLANIX2024ABC',
+    isActive: true
+  };
   const [selectedFormat, setSelectedFormat] = useState('DXF');
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
