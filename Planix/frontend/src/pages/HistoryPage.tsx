@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Download, Trash2, Eye, FileText } from 'lucide-react';
-import { usePlan } from '../context/PlanContext';
+import { usePlans } from '../context/PlanContext';
 
 const HistoryPage: React.FC = () => {
   const { plans, deletePlan } = usePlan();
