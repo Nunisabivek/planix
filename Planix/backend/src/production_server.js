@@ -85,7 +85,7 @@ const floorPlanSchema = new mongoose.Schema({
   location: { type: String },
   budget: { type: Number },
   features: [String],
-  generatedPlan: { type: String, required: true },
+  generatedPlan: { type: String, default: 'Generating floor plan...' },
   materialEstimate: {
     bricks: { quantity: Number, unit: String },
     cement: { quantity: Number, unit: String },
