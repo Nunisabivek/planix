@@ -94,14 +94,53 @@ async def shutdown_db_client():
 async def health_check():
     return {"status": "healthy", "message": "Planix API is running"}
 
-# DeepSeek API integration placeholder
-async def generate_floor_plan_with_deepseek(prompt: str) -> str:
-    """
-    Generate floor plan using DeepSeek API
-    This is a placeholder - will be implemented with actual DeepSeek integration
-    """
-    # TODO: Implement actual DeepSeek API call
-    return f"Generated floor plan for: {prompt}"
+# User management endpoints
+@app.post("/api/users/")
+async def create_user(user_data: UserCreateRequest):
+    """Create a new user"""
+    db = get_database()
+    
+    # Check if user already exists
+    existing_user = await db[USERS_COLLECTION].find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists"
+        )
+    
+    # Create new user
+    user = User(
+        email=user_data.email,
+        name=user_data.name,
+        phone=user_data.phone,
+        referral_code=f"PLANIX{str(uuid.uuid4())[:8].upper()}"
+    )
+    
+    await db[USERS_COLLECTION].insert_one(user.dict())
+    
+    # Create default subscription
+    subscription = Subscription(
+        user_id=user.id,
+        plan_type="free",
+        status="active"
+    )
+    await db[SUBSCRIPTIONS_COLLECTION].insert_one(subscription.dict())
+    
+    return {"user_id": user.id, "message": "User created successfully"}
+
+@app.get("/api/users/{user_id}")
+async def get_user(user_id: str):
+    """Get user information"""
+    db = get_database()
+    user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return user
 
 # Material estimation algorithm
 def calculate_material_estimate(area: float, rooms: int, bathrooms: int) -> dict:
