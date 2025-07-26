@@ -2,10 +2,10 @@
   "name": "planix-backend",
   "version": "1.0.0",
   "description": "Planix AI Floor Plan Generator Backend",
-  "main": "src/production_server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/production_server.js",
-    "dev": "nodemon src/production_server.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "build": "echo 'No build step required'",
     "test": "echo 'No tests specified'"
   },
